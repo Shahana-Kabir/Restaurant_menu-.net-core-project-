@@ -1,0 +1,115 @@
+@page "/"
+
+<PageTitle>Restaurant Menu</PageTitle>
+
+@using BlazorMenup.Data
+@inject MenuService MenuService
+@inject OrderService OrderService
+
+<h1>Menu</h1>
+
+
+@if (menuItems == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Click</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var menuItem in menuItems)
+            {
+                <tr>
+                    <td>@menuItem.Name</td>
+                    <td>@menuItem.Description</td>
+                    <td>@menuItem.Price</td>
+                    <td>
+                        <button @onclick="@(e => AddItem(menuItem))">
+                            Add to order
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h1>Order # @order.Id</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+     <tbody>
+        @foreach (var menuItem in order.LineItems.Keys)
+            {
+                <tr>
+                    <td>@menuItem.Name</td>
+                    <td>@menuItem.Price</td>
+                    <td>@order.LineItems[menuItem]</td>
+                    <td>@(order.LineItems[menuItem]* menuItem.Price)</td>
+                </tr>
+            }
+            
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>
+                    @order.Total()
+                </td>
+            </tr>
+            @if(!order.Id.HasValue){
+               <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>
+                   <button @onclick="@(e => ConfirmOrder(order))">Confirm Order</button>                               
+                </td>
+            </tr>
+            }
+        </tbody>
+    
+   
+</table>
+
+@code {
+    private MenuItem[]? menuItems;
+    private Order order  = new Order();
+
+    protected override async Task OnInitializedAsync()
+    {
+        menuItems = await MenuService.GetMenuAsync();
+    }
+    private void AddItem(MenuItem menuItem)
+    {
+        if(order.LineItems.ContainsKey(menuItem)){
+            order.LineItems[menuItem] += 1;
+        } else {
+            order.LineItems[menuItem] = 1;
+        }
+        @* Console.WriteLine(menuItem.Name + ":"  + order.LineItems[menuItem]);
+        Console.WriteLine(order.LineItems[menuItem]); *@
+        Console.WriteLine(order);
+        
+    }
+    private async Task ConfirmOrder(Order order)
+    {
+        await OrderService.ConfirmOrderAsync(order);
+    }
+
+
+}
